@@ -1,0 +1,5 @@
+[2026-09-23 00:28:49.253] [matching-service] starting on port 9000
+[2026-09-23 00:28:59.008] [matching-service] driver registered: D1 at(37.77, -122.41)
+[2026-09-23 00:30:51.934] [matching-service] ride request from R1 at (37.775, -122.415)
+[2026-09-23 00:30:51.936] [matching-service] matched R1 -> D1 (ride_id=ride-R1-D1); pushing assignment
+[2026-09-23 00:30:54.011] [matching-service] driver D1 acknowledged ride ride-R1-D1

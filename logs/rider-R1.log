@@ -1,0 +1,2 @@
+[2026-09-23 00:30:49.832] [rider-R1] requesting ride at (37.775, -122.415)
+[2026-09-23 00:30:54.012] [rider-R1] response: {'status': 'matched', 'ride_id': 'ride-R1-D1', 'driver_id': 'D1'}
