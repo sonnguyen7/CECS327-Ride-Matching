@@ -1,0 +1,3 @@
+[2026-10-17 06:52:49.292] [driver-D4] registering with matching service at localhost:9000
+[2026-10-17 06:52:51.395] [driver-D4] registered, now listening for assignments on port 9104
+[2026-10-17 06:54:38.442] [driver-D4] ASSIGNED ride ride-Elizabeth-D4 for rider Elizabeth

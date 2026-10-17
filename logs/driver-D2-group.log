@@ -1,0 +1,2 @@
+[2026-10-17T13:52:32.230+00:00] [driver-D2-group] RECEIVE {'status': 'ready', 'target': 'drivers.local'}
+[2026-10-17T13:56:19.782+00:00] [driver-D2-group] RECEIVE {'op': 'group', 'target': 'drivers.local', 'message_id': '271dc1c2-909a-44b7-b8c0-4a6965f28655', 'timestamp': '2026-10-17T13:56:19.777696+00:00', 'payload': {'notice': 'High demand in your area'}}

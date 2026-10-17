@@ -1,0 +1,3 @@
+[2026-10-17 06:52:32.217] [driver-D2] registering with matching service at localhost:9000
+[2026-10-17 06:52:34.326] [driver-D2] registered, now listening for assignments on port 9102
+[2026-10-17 06:55:13.404] [driver-D2] ASSIGNED ride ride-Kevin-D2 for rider Kevin
