@@ -1,62 +1,44 @@
 # CECS 327 - Distributed Ride-Matching System  
-**1. Required Software**  
+**1. Required Software**   
   * Python 3.14+  
-  * Visual Studio Code (or any code editor)
+  * Visual Studio Code (or any code editor)  
 
-**2. Dependencies**
-  * None (Standard Library Only): This project relies solely on built-in Python modules (such as http.server, urllib, json, socket, and threading). No external pip installations are required.
+**2. Dependencies**   
+  * None (Standard Library Only): This project relies solely on built-in Python modules (such as http.server, urllib, json, socket, and threading). No external pip installations are required.  
 
-**3. How to Start Each Service:** Open three separate terminal windows and execute the commands in the following order:  
-  * **Terminal 1: Matching Service (Coordinator)**
-    * Start the central matching engine first so it can begin listening for incoming registrations and ride requests:
-      * `python3 matching_service.py`  
-  * **Terminal 2: Driver Service (Driver Node)**  
-    * Launch the driver application. This process automatically registers with the Matching Service and begins listening for incoming ride assignments:  
-      * `python3 driver_service.py`  
-  * **Terminal 3: Rider Client**
-    * Run the client script to simulate a rider requesting a pickup:
-      * `python3 rider_client.py`  
+**3. How to Start Each Service:** Open separate terminal windows and execute the commands in the following order:  
+  * **Terminal 1: Event Broker (TCP Socket Server on Port 9200)**  
+      * `python3 event_broker.py`  
+  * **Terminal 2: Matching Service & Web Console (Port 9000)**  
+      * `python3 matching_service.py`   
+  * **Terminal 3: Audit Subscriber (Pub-Sub Node)**  
+      * `python3 subscriber.py audit`  
+  * **Terminal 4: Monitor Subscriber (Pub-Sub Node)**  
+      * `python3 subscriber.py monitor`  
+  * **Terminal 5-8: Driver Services (Ports 9101-9104, Group: `drivers.local`)**  
+      * Terminal 5: `python3 driver_service.py D1 9101 37.770 -122.410 drivers.local`  
+      * Terminal 6: `python3 driver_service.py D2 9102 37.790 -122.420 drivers.local`  
+      * Terminal 7: `python3 driver_service.py D3 9103 37.760 -122.400 drivers.local`  
+      * Terminal 8: `python3 driver_service.py D4 9104 37.780 -122.430 drivers.local`  
+  * **Terminal 9: Interactive Runner (Marshalling & Group Client)**  
+      * Used for running demo scripts on demand.
 
-**4. Demo:**  
-  * Run in this order, and each in different terminals:  
-    * `python3 matching_service.py`  
-    * `python3 driver_service.py <driver_id> <port> <latitude> <longitude>`  
-    * `python3 rider_client.py <rider_id> <latitude> <longitude>`  
-  * Example:  
-    * `python3 matching_service.py`  
-    * `python3 driver_service.py D1 9101 37.77 -122.41`  
-    * `python3 rider_client.py R1 37.775 -122.415`  
-  * The output:  
-    * The driver-D1.log should look like this:  
-```text
-[2026-09-13 19:30:19.485] [driver-D1] registering with matching service at localhost:9000  
-[2026-09-13 19:30:21.601] [driver-D1] registered, now listening for assignments on port 9101  
-[2026-09-13 19:30:29.792] [driver-D1] ASSIGNED ride ride-R1-D1 for rider R1  
-```
-> **Note:** Complete runtime logs for all 3 active services are located in the logs directory.  
+**4. Demo: (seen in the demo video)**  
+* **Step 1:** Start services in Terminals 1-8 as shown above. Open your web browser to `http://localhost:9000/`.  
+* **Step 2 (Marshalling):** In Terminal 9, run `python3 demo_marshall.py` to display the native Python dictionary before marshalling, the raw UTF-8 JSON bytes sent over the wire, and the unmarshalled object. 
+* **Step 3 (Request-Reply & Dynamic Matching):** From the web UI at `http://localhost:9000`, submit requests for 4 riders at coordinates (37.7749, -122.4194):  
+      * John matches Driver D1 (`ride-John-D1`).  
+      * Click Retry Same (Duplicate) to demonstrate idempotency caching without re-booking.  
+      * Elizabeth matches Driver D4 (`ride-Elizabeth-D4`).  
+      * Kevin matches Driver D2 (`ride-Kevin-D2`).
+      * Emma matches Driver D3 (`ride-Emma-D3`).
+* **Step 4 (Publish-Subscribe Notification):** Check Terminals 3 and 4 (`subscriber.py audit` and `subscriber.py monitor`). Both display all 4 `ride.assigned` event envelopes with message IDs and timestamps.
+* **Step 5 (Group Communication):** In terminal 9, run: `python3 group_client.py drivers.local "High demand in your area"`. All four driver terminals receive and log the broadcast notice simultaneously.  
 
 **5. Test cases**  
-  * **Select** the nearest driver to the client:  
-    * Set up:  
-      * Terminal 1: `python3 matching_service.py`  
-      * Terminal 2 (closer driver): `python3 driver_service.py D1 9101 37.77 -122.41`  
-      * Terminal 3 (further driver): `python3 driver_service.py D2 9102 37.90 -122.60`  
-    * Action:  
-      * Terminal 4 (Rider near D1): `python3 rider_client.py R1 37.775 -122.415`  
-    * Expected output:  
-      * The rider (R1) is matched with D1, and D1 receives the assignment on port 9101 (also marked unavailable).  
-  * **Driver** availability locking to avoid double booking  
-    * Set up:  
-      * Keep the current state from test case 1 where D1 is already booked (available: False)  
-    * Action:  
-      * Terminal 4 (New rider): `python3 rider_client.py R2 37.775 -122.415`  
-    * Expected output:  
-      * Although D1 is closer to the new driver, the service matches D2 to R2, as it is the only remaining available driver.  
-  * **No** driver available (Error Handling):  
-    * Set up:  
-      * Start `python3 matching_service.py`, but this time, with no active `driver_service.py` instances running.  
-    * Action:  
-      * `python3 rider_client.py R3 37.775 -122.415`  
-    * Expected output:  
-      * The rider client logs the failure without crashing, and the matching service lets the user know that there are no available drivers.  
+  * **Test Case 1 (Nearest Driver Matching):** Run all 4 drivers on ports 9101-9104. Request rider John at (37.7749, -122.4194). Expected output: D1 is closest and assigned (`ride-John-D1`), updating D1 to busy.  
+  * **Test Case 2 (Duplicate / Idempotency Handling):** Resend John's request with the same `request_id`. Expected output: `matching_service.py` returns the cached response, logs `IDEMPOTENCY: duplicate request`, and does not publish a duplicate event to the broker.  
+  * **Test Case 3 (All Drivers Busy / Pool Exhaustion):** Book all four drivers (John -> D1, Elizabeth -> D4, Kevin -> D2, Emma -> D3). After, submit a 5th request. Expected output: The matching service returns HTTP 503 `no_drivers_available` without crashing. 
+  * **Test Case 4 (Group Multicast):** Run `python3 group_client.py drivers.local "High demand in your area"`. Expected output: All 4 active driver group logs record the message at the exact same timestamp.  
+    
 
